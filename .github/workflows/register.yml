@@ -1,0 +1,48 @@
+name: Register APP
+
+on:
+  workflow_dispatch:
+
+jobs:
+  register:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          ref: master
+
+      - name: Setup python and poetry
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - uses: Gr1N/setup-poetry@v4
+
+      - name: Setup nodejs
+        uses: actions/setup-node@v1
+        with:
+          node-version: 14
+
+      - name: Install requirements
+        run: |
+          poetry install
+          cd register
+          npm install
+
+      - name: Register app
+        env:
+          USER: ${{ secrets.USER }}
+          PASSWD: ${{ secrets.PASSWD }}
+        run: |
+          cd register
+          bash register_app_if_not_exists.sh
+          cd ..
+          poetry run python crypto.py e
+
+      - name: Commit and push
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add .
+          git commit -m "generate app config"
+          git push
